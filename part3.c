@@ -59,16 +59,17 @@ void printPermissions(struct user *user) {
   }
 }
 
+/**
+ * Program uses   xrw
+ * Unix uses      rwx
+ * setPermissions should translate unix to this program's format?
+ * Question is not clear at all from the spec
+ */
 void setPermissions(int new_permissions, struct user *user) {
-  u_int8_t mask_size = 3;
-  for (int i = 0; i < mask_size; i++) {
-    u_int8_t mask = 0b1 << i;
-    if ((new_permissions & mask) == mask) {
-      grantPermission(i, user);
-    } else {
-      revokePermission(i, user);
-    }
-  }
+  u_int8_t execute = (new_permissions & 0b1) << 2;
+  u_int8_t write = (new_permissions & 0b10) >> 1;
+  u_int8_t read = (new_permissions & 0b100) >> 1;
+  user->permissions = execute | read | write; // xrw
 }
 
 int main(void) {
@@ -78,9 +79,11 @@ int main(void) {
   user.permissions = 0; // Sets the permissions to 0
   grantPermission(0, &user);
   grantPermission(1, &user);
-  printPermissions(&user);
+  // printPermissions(&user);
   revokePermission(1, &user);
   grantPermission(2, &user);
+  // printPermissions(&user);
+  setPermissions(7, &user);
   printPermissions(&user);
   return EXIT_SUCCESS;
 }
